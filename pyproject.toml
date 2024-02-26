@@ -1,14 +1,15 @@
 [tool.poetry]
-name = "tarea1"
+name = "recuperaci-n-informaci-n"
 version = "0.1.0"
-description = "Procesar \"time\" para un sistema de recuperación de información"
+description = "Repositorio para proyectos de poetry"
 authors = ["Crag <ogeidca49@gmail.com>"]
-license = "Mit"
+license = "MiT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
 nltk = "^3.8.1"
+scikit-learn = "^1.4.1.post1"
 
 
 [build-system]

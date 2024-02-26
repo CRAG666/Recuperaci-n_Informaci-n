@@ -7,9 +7,7 @@
 from collections import Counter
 from dataclasses import dataclass
 
-import nltk
 from nltk import word_tokenize
-from nltk.corpus.reader import documents
 from nltk.stem import PorterStemmer
 from nltk.stem.wordnet import WordNetLemmatizer
 
@@ -165,11 +163,13 @@ class IRSystem1:
             self.write_term_frecuency(
                 f"{document.Id}-{document.Id_Psical}",
                 Counter(self.preprocess_doc(document.Content)),
-                "documents",
+                "../freq/documents",
             )
 
     @staticmethod
-    def write_term_frecuency(id: str, document_word_fecuency: Counter, doc_name: str):
+    def write_term_frecuency(
+        id: str, document_word_fecuency: Counter, doc_name: str, prefix="Doc"
+    ):
         """Write frequencies in document
 
         Args:
@@ -177,21 +177,19 @@ class IRSystem1:
             document_word_fecuency: Dict with words and frequencies
             doc_name: Output file name
         """
-        line = f"\nDoc{id}"
+        line = f"{prefix}{id}"
         for word, freq in document_word_fecuency.items():
             line += f" {word}-{freq}"
         with open(doc_name + ".FRQ", "a") as file:
-            file.write(line)
+            file.write(line + "\n")
 
 
 if __name__ == "__main__":
-    dataset_prefix_path = "./dataset/TIME"
+    dataset_prefix_path = "../dataset/TIME"
     ir_system = IRSystem1(dataset_prefix_path)
     ir_system.extract_vocabulary()
     queries = load_queries(dataset_prefix_path + ".QUE")
     for id, query in enumerate(queries, start=1):
         ir_system.write_term_frecuency(
-            f"{id}",
-            Counter(ir_system.preprocess_doc(query)),
-            "queries",
+            f"{id}", Counter(ir_system.preprocess_doc(query)), "../freq/queries", "Que"
         )

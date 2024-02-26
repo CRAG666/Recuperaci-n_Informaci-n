@@ -3,7 +3,7 @@
 # Date: 25/02/2024
 # Versión: 3.0
 
-import csv
+# import csv
 import math
 from dataclasses import dataclass
 from typing import Union
@@ -25,19 +25,19 @@ def load_frequencies(
 ) -> Union[list[DocumentFrequency], list[Document]]:
     documents_frequencies = []
     with open(f"{frequencies_name}.FRQ", "r") as file:
-        for linea in file:
-            palabras = linea.split()
-            if not palabras:
+        for line in file:
+            words_frequency = line.split()
+            if not words_frequency:
                 break
             if query:
-                id = palabras[0]
+                id = words_frequency[0]
                 doc = Document(id=id, frequencies={})
             else:
-                id, id_psical = palabras[0].split("-")
+                id, id_psical = words_frequency[0].split("-")
                 doc = DocumentFrequency(id=id, id_psical=id_psical, frequencies={})
-            for palabra_valor in palabras[1:]:
-                palabra, valor = palabra_valor.split("-")
-                doc.frequencies[palabra] = int(valor)
+            for word_frequency in words_frequency[1:]:
+                word, frquency = word_frequency.split("-")
+                doc.frequencies[word] = int(frquency)
             documents_frequencies.append(doc)
     return documents_frequencies
 
@@ -51,16 +51,16 @@ class IRSystem2:
     def __get_vocabulary(self):
         vocabulary = dict()
         for document in self.documents_frequencies:
-            for word, _ in document.frequencies.items():
+            for word, frequency in document.frequencies.items():
                 if vocabulary.get(word):
-                    vocabulary[word] += 1
+                    vocabulary[word] += frequency
                 else:
-                    vocabulary[word] = 1
+                    vocabulary[word] = frequency
 
-        with open("frequencies.csv", "w", newline="") as csv_file:
-            escritor_csv = csv.DictWriter(csv_file, fieldnames=vocabulary.keys())
-            escritor_csv.writeheader()
-            escritor_csv.writerow(vocabulary)
+        # with open("frequencies.csv", "w", newline="") as csv_file:
+        #     writter_csv = csv.DictWriter(csv_file, fieldnames=vocabulary.keys())
+        #     writter_csv.writeheader()
+        #     writter_csv.writerow(vocabulary)
         return vocabulary
 
     def __vectoricer_documents(self):
@@ -85,28 +85,29 @@ class IRSystem2:
                 query_vector[word] = 0
         return query_vector
 
-    def cosine_similarity(self, query_vector, document_vector):
+    def cosine_similarity(self, query, document):
         dot_product = sum(
-            query_vector[term] * document_vector.get(term, 0) for term in query_vector
+            query[index] * document[index] for index in query if index in document
         )
-        query_norm = math.sqrt(sum(value**2 for value in query_vector.values()))
-        document_norm = math.sqrt(sum(value**2 for value in document_vector.values()))
-        if query_norm == 0 or document_norm == 0:
+        norm_query = math.sqrt(sum(query[index] ** 2 for index in query))
+        norm_document = math.sqrt(sum(document[index] ** 2 for index in document))
+
+        if norm_query * norm_document == 0:
             return 0
         else:
-            return dot_product / (query_norm * document_norm)
+            return dot_product / (norm_query * norm_document)
 
 
 if __name__ == "__main__":
-    queries_frequencies = load_frequencies("queries", True)
-    ir_system = IRSystem2(load_frequencies("documents"))
+    queries_frequencies = load_frequencies("../freq/queries", True)
+    ir_system = IRSystem2(load_frequencies("../freq/documents"))
     for qu_id, query in enumerate(queries_frequencies[:10], start=1):
         query_vector = ir_system.vectoricer_query(query)
         similarities = []
         for doc_id, document_vector in enumerate(ir_system.documents_vectors, start=1):
             similarity = ir_system.cosine_similarity(query_vector, document_vector)
-            similarities.append((doc_id, similarity))
+            if similarity >= 0.01:
+                similarities.append((doc_id, similarity))
         similarities.sort(key=lambda x: x[1], reverse=True)
         print(qu_id)
-        for doc_id, similarity in similarities[:10]:
-            print(f"D{doc_id}: {similarity:.2f}")
+        print(*(d for d, _ in similarities))

@@ -3,18 +3,13 @@
 # Developer: Diego Cruz Aguilar
 # Date: 02/02/2024
 # Versión: 2.0
-
+import re
 from collections import Counter
 from dataclasses import dataclass
 
 from nltk import word_tokenize
 from nltk.stem import PorterStemmer
 from nltk.stem.wordnet import WordNetLemmatizer
-
-# Ignore ALPHABET symbols
-ALPHABET = [chr(i) for i in range(ord("A"), ord("Z") + 1)]
-# For remove empty string
-ALPHABET.append("")
 
 
 def load_stopwords(stopwords_file: str) -> list[str]:
@@ -31,7 +26,7 @@ def load_stopwords(stopwords_file: str) -> list[str]:
         # Clean stopwords
         for word in file:
             w = word.strip()
-            if w not in ALPHABET:
+            if w != "":
                 stopwords.append(w.lower())
         return stopwords
 
@@ -139,23 +134,34 @@ class IRSystem1:
         self.ps = PorterStemmer()
 
     def preprocess_doc(self, text: str) -> list:
-        """Preprocess text of documents or queries
 
-        Args:
-            text: Text for applty preprocessing
+        text = re.sub(r"[^\w]", " ", text)
+        text = re.sub(r"[^\D]", " ", text)
+        # text = re.sub(r'[^0-9]', ' ', text)
 
-        Returns: List of words
+        text = text.lower()
 
-        """
-        word_tokens = word_tokenize(text.lower())
+        word_tokens = word_tokenize(text)
 
-        preprocessed_tokens = [
-            self.wordnet_lemmatizer.lemmatize(self.ps.stem(w))
-            for w in word_tokens
-            if w.isalnum() and w not in self.stop_words
-        ]
+        stop_words = set(self.stop_words)
+        filtered_word_tokens = [w for w in word_tokens if w not in stop_words]
 
-        return preprocessed_tokens
+        # retrieve stem from words
+        ps = PorterStemmer()
+        stemming = []
+
+        for w in filtered_word_tokens:
+            stem = ps.stem(w)
+            stemming.append(stem)
+
+        wordnet_lemmatizer = WordNetLemmatizer()
+
+        lemmatization = []
+        for w in stemming:
+            lemma = wordnet_lemmatizer.lemmatize(w)
+            lemmatization.append(lemma)
+
+        return lemmatization
 
     def extract_vocabulary(self):
         """Create file with words frequencies"""
